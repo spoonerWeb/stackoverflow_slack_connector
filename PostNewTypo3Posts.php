@@ -21,9 +21,11 @@ class PostNewTypo3Posts
     protected $stackAppsKey = 'iONJDdLasyJq99jZ24Ewfw((';
 
     /**
+     * WebHook URL to channel #stackoverflow
+     *
      * @var string
      */
-    protected $slackUrl = 'https://hooks.slack.com/services/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';
+    protected $slackUrl = 'https://hooks.slack.com/services/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';
 
     /**
      * @var string
