@@ -52,7 +52,7 @@ class PostNewTypo3Posts
      */
     public function setStackAppsKey()
     {
-        $this->stackAppsKey = file_get_contents($this->fileWithStackAppsKey);
+        $this->stackAppsKey = str_replace("\n", '', file_get_contents($this->fileWithStackAppsKey));
     }
 
     /**
@@ -60,7 +60,7 @@ class PostNewTypo3Posts
      */
     public function setWebHookUrl()
     {
-        $this->slackUrl = file_get_contents($this->fileWithSlackWebHookUrl);
+        $this->slackUrl = str_replace("\n", '', file_get_contents($this->fileWithSlackWebHookUrl));
     }
 
     /**
@@ -132,7 +132,7 @@ class PostNewTypo3Posts
      */
     public function getNewestPostsInStackOverflow($tag = 'typo3')
     {
-        $lastExecution = file_get_contents($this->fileWithTimestampOfLastExecution) ?: 0;
+        $lastExecution = (int)file_get_contents($this->fileWithTimestampOfLastExecution) ?: 0;
         $taggedQuestionsUrl = $this->apiTagUrl . '&tagged=' . $tag . '&key=' . $this->stackAppsKey . '&fromdate=' . $lastExecution;
         $questions = file_get_contents('compress.zlib://' . $taggedQuestionsUrl);
 
