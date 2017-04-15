@@ -151,6 +151,7 @@ class PostNewTypo3Posts
 
 $newPostService = new PostNewTypo3Posts();
 $newPostService->setStackAppsKey();
+$newPostService->setWebHookUrl();
 $newestQuestions = $newPostService->getNewestPostsInStackOverflow();
 $postData = $newPostService->convertQuestionToSlackData($newestQuestions);
 $newPostService->sendPostToSlack($postData);
