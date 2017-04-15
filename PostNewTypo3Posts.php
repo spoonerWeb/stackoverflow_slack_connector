@@ -18,7 +18,7 @@ class PostNewTypo3Posts
     /**
      * @var string
      */
-    protected $stackAppsKey = 'iONJDdLasyJq99jZ24Ewfw((';
+    protected $stackAppsKey = '';
 
     /**
      * WebHook URL to channel #stackoverflow
@@ -36,6 +36,19 @@ class PostNewTypo3Posts
      * @var string
      */
     protected $fileWithTimestampOfLastExecution = 'last_execution.txt';
+
+    /**
+     * @var string
+     */
+    protected $fileWithStackAppsKey = 'key.txt';
+
+    /**
+     * @return void
+     */
+    public function setStackAppsKey()
+    {
+        $this->stackAppsKey = file_get_contents($this->fileWithStackAppsKey);
+    }
 
     /**
      * @param array $data
@@ -124,6 +137,7 @@ class PostNewTypo3Posts
 }
 
 $newPostService = new PostNewTypo3Posts();
+$newPostService->setStackAppsKey();
 $newestQuestions = $newPostService->getNewestPostsInStackOverflow();
 $postData = $newPostService->convertQuestionToSlackData($newestQuestions);
 $newPostService->sendPostToSlack($postData);
