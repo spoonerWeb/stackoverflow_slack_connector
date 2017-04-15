@@ -25,7 +25,7 @@ class PostNewTypo3Posts
      *
      * @var string
      */
-    protected $slackUrl = 'https://hooks.slack.com/services/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';
+    protected $slackUrl = '';
 
     /**
      * @var string
@@ -43,11 +43,24 @@ class PostNewTypo3Posts
     protected $fileWithStackAppsKey = 'key.txt';
 
     /**
+     * @var string
+     */
+    protected $fileWithSlackWebHookUrl = 'webhook.txt';
+
+    /**
      * @return void
      */
     public function setStackAppsKey()
     {
         $this->stackAppsKey = file_get_contents($this->fileWithStackAppsKey);
+    }
+
+    /**
+     * @return void
+     */
+    public function setWebHookUrl()
+    {
+        $this->slackUrl = file_get_contents($this->fileWithSlackWebHookUrl);
     }
 
     /**
