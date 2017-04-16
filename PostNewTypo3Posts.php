@@ -156,4 +156,6 @@ $newestQuestions = $newPostService->getNewestPostsInStackOverflow();
 $postData = $newPostService->convertQuestionToSlackData($newestQuestions);
 $newPostService->sendPostToSlack($postData);
 
-$newPostService->setNewTimestamp();
+if (!empty($postData)) {
+    $newPostService->setNewTimestamp();
+}
