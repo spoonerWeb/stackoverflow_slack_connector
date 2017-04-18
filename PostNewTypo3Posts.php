@@ -45,7 +45,12 @@ class PostNewTypo3Posts
     /**
      * @var string
      */
-    protected $fileWithSlackWebHookUrl = 'webhook.txt';
+    protected $fileWithConfigurationOfWebHookUrls = 'webhooks.ini';
+
+    /**
+     * @var array
+     */
+    protected $webhooks = [];
 
     /**
      * @return void
@@ -58,9 +63,9 @@ class PostNewTypo3Posts
     /**
      * @return void
      */
-    public function setWebHookUrl()
+    public function setWebHookUrls()
     {
-        $this->slackUrl = str_replace("\n", '', file_get_contents($this->fileWithSlackWebHookUrl));
+        $this->webhooks = parse_ini_file($this->fileWithConfigurationOfWebHookUrls);
     }
 
     /**
@@ -71,7 +76,7 @@ class PostNewTypo3Posts
     {
         $postData = [];
         foreach ($data['items'] as $question) {
-            $postData[$question['question_id']] = [
+            $attachment = [
                 'attachments' => [
                     [
                         'fallback' => 'New question in StackOverflow: ' . $question['title'],
@@ -103,6 +108,11 @@ class PostNewTypo3Posts
                     ]
                 ]
             ];
+            foreach ($question['tags'] as $tag) {
+                if (array_key_exists($tag, $this->webhooks)) {
+                    $postData[$tag][$question['question_id']] = $attachment;
+                }
+            }
         }
 
         return $postData;
@@ -114,15 +124,17 @@ class PostNewTypo3Posts
      */
     public function sendPostToSlack(array $data)
     {
-        foreach ($data as $post) {
-            $curlHandler = curl_init();
-            curl_setopt($curlHandler, CURLOPT_URL, $this->slackUrl);
-            curl_setopt($curlHandler, CURLOPT_POST, count($post));
-            curl_setopt($curlHandler, CURLOPT_POSTFIELDS, json_encode($post));
+        foreach ($data as $tag => $postData) {
+            foreach ($postData as $post) {
+                $curlHandler = curl_init();
+                curl_setopt($curlHandler, CURLOPT_URL, $this->webhooks[$tag]);
+                curl_setopt($curlHandler, CURLOPT_POST, count($post));
+                curl_setopt($curlHandler, CURLOPT_POSTFIELDS, json_encode($post));
 
-            curl_exec($curlHandler);
+                curl_exec($curlHandler);
 
-            curl_close($curlHandler);
+                curl_close($curlHandler);
+            }
         }
     }
 
@@ -151,7 +163,7 @@ class PostNewTypo3Posts
 
 $newPostService = new PostNewTypo3Posts();
 $newPostService->setStackAppsKey();
-$newPostService->setWebHookUrl();
+$newPostService->setWebHookUrls();
 $newestQuestions = $newPostService->getNewestPostsInStackOverflow();
 $postData = $newPostService->convertQuestionToSlackData($newestQuestions);
 $newPostService->sendPostToSlack($postData);
