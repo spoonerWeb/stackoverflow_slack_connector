@@ -90,17 +90,6 @@ class PostNewTypo3Posts
                         ),
                         'fields' => [
                             [
-                                'title' => 'Created',
-                                'value' => '<!date^' . $question['creation_date'] . '^{date} at {time}|' . strftime('%A.%d.%Y',
-                                        $question['creation_date']) . '>',
-                                'short' => true
-                            ],
-                            [
-                                'title' => 'Author',
-                                'value' => $question['owner']['display_name'],
-                                'short' => true
-                            ],
-                            [
                                 'title' => 'Tags',
                                 'value' => implode(', ', $question['tags'])
                             ]
