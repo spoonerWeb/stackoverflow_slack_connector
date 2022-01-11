@@ -18,39 +18,39 @@ class PostNewTypo3Posts
     /**
      * @var string
      */
-    protected $stackAppsKey = '';
+    protected string $stackAppsKey = '';
 
     /**
      * WebHook URL to channel #stackoverflow
      *
      * @var string
      */
-    protected $slackUrl = '';
+    protected string $slackUrl = '';
 
     /**
      * @var string
      */
-    protected $apiTagUrl = 'https://api.stackexchange.com/2.2/questions?site=stackoverflow&filter=withbody&order=asc';
+    protected string $apiTagUrl = 'https://api.stackexchange.com/2.2/questions?site=stackoverflow&filter=withbody&order=asc';
 
     /**
      * @var string
      */
-    protected $fileWithTimestampOfLastExecution = 'last_execution.txt';
+    protected string $fileWithTimestampOfLastExecution = 'last_execution.txt';
 
     /**
      * @var string
      */
-    protected $fileWithStackAppsKey = 'key.txt';
+    protected string $fileWithStackAppsKey = 'key.txt';
 
     /**
      * @var string
      */
-    protected $fileWithConfigurationOfWebHookUrls = 'webhooks.ini';
+    protected string $fileWithConfigurationOfWebHookUrls = 'webhooks.ini';
 
     /**
      * @var array
      */
-    protected $webhooks = [];
+    protected array $webhooks = [];
 
     /**
      * @return void
@@ -61,18 +61,27 @@ class PostNewTypo3Posts
     }
 
     /**
+     * @return array
+     */
+    public function getMainTags()
+    {
+        return array_keys(parse_ini_file($this->fileWithConfigurationOfWebHookUrls, true));
+    }
+
+    /**
      * @return void
      */
     public function setWebHookUrls()
     {
-        $this->webhooks = parse_ini_file($this->fileWithConfigurationOfWebHookUrls);
+        $this->webhooks = parse_ini_file($this->fileWithConfigurationOfWebHookUrls, true);
     }
 
     /**
+     * @param string $mainTag
      * @param array $data
      * @return array
      */
-    public function convertQuestionToSlackData(array $data)
+    public function convertQuestionToSlackData(string $mainTag, array $data): array
     {
         $postData = [];
         foreach ($data['items'] as $question) {
@@ -98,7 +107,7 @@ class PostNewTypo3Posts
                 ]
             ];
             foreach ($question['tags'] as $tag) {
-                if (array_key_exists($tag, $this->webhooks)) {
+                if (array_key_exists($tag, $this->webhooks[$mainTag])) {
                     $postData[$tag][$question['question_id']] = $attachment;
                 }
             }
@@ -108,15 +117,16 @@ class PostNewTypo3Posts
     }
 
     /**
+     * @param string $mainTag
      * @param array $data
      * @return void
      */
-    public function sendPostToSlack(array $data)
+    public function sendPostToSlack(string $mainTag, array $data): void
     {
         foreach ($data as $tag => $postData) {
             foreach ($postData as $post) {
                 $curlHandler = curl_init();
-                curl_setopt($curlHandler, CURLOPT_URL, $this->webhooks[$tag]);
+                curl_setopt($curlHandler, CURLOPT_URL, $this->webhooks[$mainTag][$tag]);
                 curl_setopt($curlHandler, CURLOPT_POST, count($post));
                 curl_setopt($curlHandler, CURLOPT_POSTFIELDS, json_encode($post));
 
@@ -131,7 +141,7 @@ class PostNewTypo3Posts
      * @param string $tag
      * @return array|null
      */
-    public function getNewestPostsInStackOverflow($tag = 'typo3')
+    public function getNewestPostsInStackOverflow(string $tag = 'typo3'): ?array
     {
         $lastExecution = (int)file_get_contents($this->fileWithTimestampOfLastExecution) ?: 0;
         $taggedQuestionsUrl = $this->apiTagUrl . '&tagged=' . $tag . '&key=' . $this->stackAppsKey . '&fromdate=' . $lastExecution;
@@ -143,7 +153,7 @@ class PostNewTypo3Posts
     /**
      * @return void
      */
-    public function setNewTimestamp()
+    public function setNewTimestamp(): void
     {
         file_put_contents($this->fileWithTimestampOfLastExecution, time());
     }
@@ -153,9 +163,12 @@ class PostNewTypo3Posts
 $newPostService = new PostNewTypo3Posts();
 $newPostService->setStackAppsKey();
 $newPostService->setWebHookUrls();
-$newestQuestions = $newPostService->getNewestPostsInStackOverflow();
-$postData = $newPostService->convertQuestionToSlackData($newestQuestions);
-$newPostService->sendPostToSlack($postData);
+$tags = $newPostService->getMainTags();
+foreach ($tags as $tag) {
+    $newestQuestions = $newPostService->getNewestPostsInStackOverflow($tag);
+    $postData = $newPostService->convertQuestionToSlackData($tag, $newestQuestions);
+    $newPostService->sendPostToSlack($tag, $postData);
+}
 
 if (!empty($postData)) {
     $newPostService->setNewTimestamp();
