@@ -145,6 +145,7 @@ class PostNewTypo3Posts
     {
         $lastExecution = (int)file_get_contents($this->fileWithTimestampOfLastExecution) ?: 0;
         $taggedQuestionsUrl = $this->apiTagUrl . '&tagged=' . $tag . '&key=' . $this->stackAppsKey . '&fromdate=' . $lastExecution;
+        ini_set('user_agent', 'Mozilla/4.0 (compatible; MSIE 6.0)'); // Needed as file_get_contents gives a 403 Forbidden
         $questions = file_get_contents('compress.zlib://' . $taggedQuestionsUrl);
 
         return json_decode($questions, true);
